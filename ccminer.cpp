@@ -1116,14 +1116,14 @@ static bool submit_upstream_work_mtp(CURL *curl, struct work *work, struct mtp *
 		json_array_append(json_arr, json_string(rpc_user));
 
 		int Err = 0;
-	
-		uchar hexjob_id[4]; // = (uchar*)malloc(4);
-		hex2bin((uchar*)&hexjob_id, sobid, 4);
+
+		uchar hexjob_id[8]; // = (uchar*)malloc(4);
+		hex2bin((uchar*)&hexjob_id, sobid, 8);
 		
 		free(sobid);
 
-		json_array_append(json_arr, json_bytes((uchar*)&hexjob_id, 4));		
-		json_array_append(json_arr, json_bytes(work->xnonce2, sizeof(uint64_t*)));
+		json_array_append(json_arr, json_bytes((uchar*)&hexjob_id, 8));		
+		json_array_append(json_arr, json_bytes(work->xnonce2, work->xnonce2_len));
 		json_array_append(json_arr, json_bytes((uchar*)&ntime, sizeof(uint32_t)));
 		json_array_append(json_arr, json_bytes((uchar*)&nonce, sizeof(uint32_t)));
 		json_array_append(json_arr, json_bytes(mtp->MerkleRoot, SizeMerkleRoot));
@@ -2596,6 +2596,7 @@ static bool stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 
 	snprintf(work->job_id, sizeof(work->job_id), "%07x %s",
 		be32dec(sctx->job.ntime) & 0xfffffff, sctx->job.job_id);
+
 	work->xnonce2_len = sctx->xnonce2_size;
 	memcpy(work->xnonce2, sctx->job.xnonce2, sctx->xnonce2_size);
 

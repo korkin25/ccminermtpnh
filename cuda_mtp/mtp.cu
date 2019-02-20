@@ -34,6 +34,7 @@ static  unsigned char TheMerkleRoot[MAX_GPUS][16];
 static  argon2_context context[MAX_GPUS];
 static argon2_instance_t instance[MAX_GPUS];
 static uint8_t *dx[MAX_GPUS];
+static uint256 TheUint256Target[MAX_GPUS];
 //static pthread_mutex_t work_lock = PTHREAD_MUTEX_INITIALIZER;
 //static pthread_barrier_t barrier;
 //static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
@@ -194,6 +195,8 @@ sleep(30);
 
 	mtp_setBlockTarget(thr_id, endiandata, ptarget, &TheMerkleRoot[thr_id]);
 	root.resize(0);
+
+	TheUint256Target[thr_id] = ((uint256*)ptarget)[0];
 }
 
 /*
@@ -229,14 +232,16 @@ fillGpu[thr_id]=false;
 		if (foundNonce != UINT32_MAX)
 		{
 
-
+			/*
 			uint256 TheUint256Target[1];
 			TheUint256Target[0] = ((uint256*)ptarget)[0];
+			*/
+
 
 			blockS nBlockMTP[MTP_L *2] = {0};
 			unsigned char nProofMTP[MTP_L * 3 * 353 ] = {0};
 
-			uint32_t is_sol = mtp_solver(thr_id,foundNonce, &instance[thr_id], nBlockMTP,nProofMTP, TheMerkleRoot[thr_id], mtpHashValue, *ordered_tree[thr_id], endiandata,TheUint256Target[0]);
+			uint32_t is_sol = mtp_solver(thr_id,foundNonce, &instance[thr_id], nBlockMTP,nProofMTP, TheMerkleRoot[thr_id], mtpHashValue, *ordered_tree[thr_id], endiandata,TheUint256Target[thr_id]);
 
 			if (is_sol==1 /*&& fulltest(vhash64, ptarget)*/) {
 				int res = 1;

@@ -1033,6 +1033,7 @@ void work_set_target(struct work* work, double diff)
 
 void work_set_target_mtp(struct work* work, uchar* target)
 {
+
 	for (int i = 0; i<8; i++)
 		work->target[i] = ((uint32_t*)target)[i];
 
@@ -1893,7 +1894,7 @@ out:
 static bool stratum_parse_extranonce_mtp(struct stratum_ctx *sctx, json_t *params, int pndx)
 {
 	const char* xnonce1;
-	int xn2_size;
+	int xn1_size, xn2_size;
 
 	xnonce1 = json_string_value(json_array_get(params, pndx));
 	if (!xnonce1) {
@@ -1907,7 +1908,9 @@ static bool stratum_parse_extranonce_mtp(struct stratum_ctx *sctx, json_t *param
 	goto out;
 	}
 	*/
-	xn2_size = 8; // by definition
+
+	xn1_size = strlen(xnonce1) / 2;
+	xn2_size = 16 - xn1_size; // by definition
 	if (xn2_size < 2 || xn2_size > 16) {
 		applog(LOG_INFO, "Failed to get valid n2size in parse_extranonce");
 		goto out;
@@ -1916,7 +1919,7 @@ static bool stratum_parse_extranonce_mtp(struct stratum_ctx *sctx, json_t *param
 	pthread_mutex_lock(&stratum_work_lock);
 	if (sctx->xnonce1)
 		free(sctx->xnonce1);
-	sctx->xnonce1_size = strlen(xnonce1) / 2;
+	sctx->xnonce1_size = xn1_size;
 	sctx->xnonce1 = (uchar*)calloc(1, sctx->xnonce1_size);
 	if (unlikely(!sctx->xnonce1)) {
 		applog(LOG_ERR, "Failed to alloc xnonce1");
@@ -2259,6 +2262,50 @@ bool stratum_authorize_bos(struct stratum_ctx *sctx, const char *user, const cha
 
 	if (!opt_extranonce)
 		goto out;
+
+	// subscribe to extranonce (optional)
+	MyObject = json_object();
+	json_object_set_new(MyObject, "id", json_integer(3));
+	json_object_set_new(MyObject, "method", json_string("mining.extranonce.subscribe"));
+	json_object_set_new(MyObject, "params", json_array());
+
+	serialized = bos_serialize(MyObject, boserror);
+
+	if (!stratum_send_line_bos(sctx, serialized))
+		goto out;
+
+	// reduced timeout to handle pools ignoring this method without answer (like xpool.ca)
+	if (!socket_full(sctx->sock, 1)) {
+		if (opt_debug)
+			applog(LOG_DEBUG, "stratum extranonce subscribe timed out");
+		goto out;
+	}
+
+	sret = stratum_recv_line_boschar(sctx);
+
+	if (sret) {
+
+		val = JSON_LOADS(sret, &err);
+
+		if (!val) {
+			applog(LOG_ERR, "JSON decode failed(%d): %s", err.line, err.text);
+		}
+		else {
+			if ((int)json_integer_value(json_object_get(val, "id")) != 3) {
+				// we receive a standard method if extranonce is ignored
+				if (!stratum_handle_method_bos(sctx, sret))
+					applog(LOG_WARNING, "Stratum extranonce answer id was not correct!");
+			}
+			else {
+				res_val = json_object_get(val, "result");
+				if (opt_debug && (!res_val || json_is_false(res_val)))
+					applog(LOG_DEBUG, "extranonce subscribe not supported");
+			}
+		}
+
+		free(sret);
+	}
+
 out:
 	if (val)
 		json_decref(val);
@@ -2435,7 +2482,6 @@ static bool stratum_notify_bos(struct stratum_ctx *sctx, json_t *params)
 	*/
 	//	printf("before merkle count\n");
 	job_idsize = json_bytes_size(json_array_get(params, p));
-
 	job_id = (const uchar*)json_bytes_value(json_array_get(params, p++));
 
 	//	memcpy(sctx->job.ucjob_id, job_id, job_idsize);
@@ -3299,7 +3345,7 @@ bool stratum_handle_method_bos_json(struct stratum_ctx *sctx, json_t *val)
 		goto out;
 	}
 	if (!strcasecmp(method, "mining.set_extranonce")) {
-		ret = stratum_parse_extranonce(sctx, params, 0);
+		ret = stratum_parse_extranonce_mtp(sctx, params, 0);
 		goto out;
 	}
 	if (!strcasecmp(method, "client.reconnect")) {
