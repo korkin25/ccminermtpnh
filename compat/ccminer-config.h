@@ -152,19 +152,19 @@
 /* #undef NO_MINUS_C_MINUS_O */
 
 /* Name of package */
-#define PACKAGE "ccminer"
+#define PACKAGE "ccminer 1.1.15-mtp"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "ccminer"
+#define PACKAGE_NAME "ccminer 1.1.15-mtp"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "http://github.com/djm34/ccminer-msvc2015"
+#define PACKAGE_URL "https://github.com/nemosminer/ccminer"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.1.12-djm34"
+#define PACKAGE_VERSION "1.1.15-mtp"
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
