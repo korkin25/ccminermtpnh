@@ -22,6 +22,7 @@
     <ProjectGuid>{36DC07F9-A4A6-4877-A146-1B960083CF6F}</ProjectGuid>
     <RootNamespace>ccminer</RootNamespace>
   </PropertyGroup>
+  <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
