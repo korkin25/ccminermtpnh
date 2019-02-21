@@ -69,7 +69,7 @@ extern "C" int scanhash_mtp(int nthreads,int thr_id, struct work* work, uint32_t
 		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 //		cudaSetDeviceFlags(cudaDeviceScheduleYield);
 //		cudaDeviceSetSharedMemConfig(cudaSharedMemBankSizeEightByte);
-		int intensity = 16;
+		int intensity = 18;
 		throughput = cuda_default_throughput(thr_id, 1U << intensity); // 18=256*256*4;
 //		throughput =  1024*64;
 		if (init[thr_id]) throughput = min(throughput, max_nonce - first_nonce);
